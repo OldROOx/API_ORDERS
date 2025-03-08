@@ -36,7 +36,7 @@ func NewRabbitMQEventConsumer(
 }
 
 func (c *RabbitMQEventConsumer) StartConsumingPaymentEvents(queueName, exchange, routingKey string) error {
-	// Declare the queue
+
 	q, err := c.channel.QueueDeclare(
 		queueName, // name
 		true,      // durable
@@ -49,7 +49,6 @@ func (c *RabbitMQEventConsumer) StartConsumingPaymentEvents(queueName, exchange,
 		return err
 	}
 
-	// Bind the queue to the exchange
 	err = c.channel.QueueBind(
 		q.Name,     // queue name
 		routingKey, // routing key
@@ -61,7 +60,6 @@ func (c *RabbitMQEventConsumer) StartConsumingPaymentEvents(queueName, exchange,
 		return err
 	}
 
-	// Consume messages
 	msgs, err := c.channel.Consume(
 		q.Name, // queue
 		"",     // consumer

@@ -23,7 +23,6 @@ func NewRabbitMQEventPublisher(amqpURL, exchange string) (*RabbitMQEventPublishe
 		return nil, err
 	}
 
-	// Declare the exchange
 	err = ch.ExchangeDeclare(
 		exchange, // name
 		"topic",  // type

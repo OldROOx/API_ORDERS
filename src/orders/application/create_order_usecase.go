@@ -23,13 +23,12 @@ func NewCreateOrderUseCase(
 }
 
 func (uc *CreateOrderUseCase) Execute(customerID uint, items []entities.OrderItem) (*entities.Order, error) {
-	// Calculate total amount
+
 	var totalAmount float64
 	for _, item := range items {
 		totalAmount += item.TotalPrice
 	}
 
-	// Create new order
 	order := &entities.Order{
 		CustomerID:  customerID,
 		Items:       items,
@@ -39,12 +38,10 @@ func (uc *CreateOrderUseCase) Execute(customerID uint, items []entities.OrderIte
 		UpdatedAt:   time.Now(),
 	}
 
-	// Save to repository
 	if err := uc.orderRepo.Save(order); err != nil {
 		return nil, err
 	}
 
-	// Publish order.created event
 	event := entities.Event{
 		ID:        uuid.New().String(),
 		Type:      "order.created",
@@ -57,9 +54,7 @@ func (uc *CreateOrderUseCase) Execute(customerID uint, items []entities.OrderIte
 	}
 
 	if err := uc.eventPublisher.PublishEvent(event); err != nil {
-		// Log error but continue
-		// In a production environment, we might want to implement a retry mechanism
-		// or store failed events for later processing
+
 	}
 
 	return order, nil

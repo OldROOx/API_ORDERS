@@ -23,12 +23,11 @@ func NewProcessPaymentUseCase(
 }
 
 func (uc *ProcessPaymentUseCase) PaymentCompleted(orderID uint, paymentID string) error {
-	// Update order status
+
 	if err := uc.orderRepo.UpdateStatus(orderID, entities.OrderStatusPaid); err != nil {
 		return err
 	}
 
-	// Publish payment.completed event
 	event := entities.Event{
 		ID:        uuid.New().String(),
 		Type:      "order.paid",
@@ -43,12 +42,11 @@ func (uc *ProcessPaymentUseCase) PaymentCompleted(orderID uint, paymentID string
 }
 
 func (uc *ProcessPaymentUseCase) PaymentFailed(orderID uint, reason string) error {
-	// Update order status
+
 	if err := uc.orderRepo.UpdateStatus(orderID, entities.OrderStatusCanceled); err != nil {
 		return err
 	}
 
-	// Publish payment.failed event
 	event := entities.Event{
 		ID:        uuid.New().String(),
 		Type:      "order.payment_failed",
