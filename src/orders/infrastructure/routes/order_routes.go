@@ -1,44 +1,33 @@
 package routes
 
 import (
-	"app.initial/src/orders/application"
+	"app.initial/src/core/container"
 	"app.initial/src/orders/infrastructure/controllers"
-	"app.initial/src/orders/infrastructure/repositories"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
 func SetupOrderRoutes(api *gin.RouterGroup, db *gorm.DB, rabbitMQURL string) {
+	// Inicializar contenedor de dependencias
+	c := container.NewOrdersContainer(db)
 
-	orderRepo := repositories.NewMySQLOrderRepository(db)
-	eventPublisher, err := repositories.NewRabbitMQEventPublisher(rabbitMQURL, "orders_exchange")
-	if err != nil {
+	// Inicializar consumidor de eventos
+	if err := c.ConfigureEventConsumer(rabbitMQURL); err != nil {
 		panic(err)
 	}
 
-	createOrderUseCase := application.NewCreateOrderUseCase(orderRepo, eventPublisher)
-	getOrderUseCase := application.NewGetOrderUseCase(orderRepo)
-	getCustomerOrdersUseCase := application.NewGetCustomerOrdersUseCase(orderRepo)
-	processPaymentUseCase := application.NewProcessPaymentUseCase(orderRepo, eventPublisher)
-
-	eventConsumer, err := repositories.NewRabbitMQEventConsumer(rabbitMQURL, processPaymentUseCase)
-	if err != nil {
-		panic(err)
-	}
-
-	err = eventConsumer.StartConsumingPaymentEvents(
-		"payment_events_queue",
-		"payments_exchange",
-		"payment.#",
+	// Inicializar controladores con casos de uso inyectados
+	createOrderController := controllers.NewCreateOrderController(
+		c.GetCreateOrderUseCase(rabbitMQURL),
 	)
-	if err != nil {
-		panic(err)
-	}
+	getOrderController := controllers.NewGetOrderController(
+		c.GetGetOrderUseCase(),
+	)
+	getCustomerOrdersController := controllers.NewGetCustomerOrdersController(
+		c.GetGetCustomerOrdersUseCase(),
+	)
 
-	createOrderController := controllers.NewCreateOrderController(createOrderUseCase)
-	getOrderController := controllers.NewGetOrderController(getOrderUseCase)
-	getCustomerOrdersController := controllers.NewGetCustomerOrdersController(getCustomerOrdersUseCase)
-
+	// Configurar rutas
 	orders := api.Group("/orders")
 	{
 		orders.POST("", createOrderController.Handle)
