@@ -20,7 +20,7 @@ func main() {
 	}
 
 	// RabbitMQ URL
-	rabbitMQURL := "amqp://guest:guest@localhost:5672/"
+	rabbitMQURL := "amqp://guest:guest@54.84.215.25:5672/"
 
 	// Router setup
 	r := router.NewRouter(db)
